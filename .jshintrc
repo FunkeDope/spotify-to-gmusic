@@ -1,0 +1,13 @@
+{
+	//"camelcase": true,
+	"curly": true,
+	"eqeqeq": true,
+	"strict": true,
+	"browser": true,
+	"devel": true,
+	"jquery": true,
+	"predef": ["angular", "zxcvbn", "exports", "EventSource", "self", "module", "rgb2hex"],
+	"loopfunc": true,
+	"esversion": 6,
+	"node": true
+}

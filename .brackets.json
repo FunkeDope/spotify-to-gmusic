@@ -1,0 +1,8 @@
+{
+	"bb.beautify.onSave": true,
+	"path": {
+		"**min**.js": {
+			"bb.beautify.onSave": false
+		}
+	}
+}
