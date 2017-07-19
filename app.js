@@ -7,7 +7,8 @@ var config = require('./config'),
     util = require('util'),
     //sanitize = require("sanitize-filename"),
     //fs = require('fs'),
-    winston = require('winston');
+    winston = require('winston'),
+    url = require('url');
 
 
 winston.configure({
@@ -63,18 +64,31 @@ app.get('/api/get/:userID/:playlistID', function(req, res) {
         }, function(err) {
             console.log('Something went wrong!', err);
         });
-
-
 });
 
-app.get('/api/callback', function(req, res) {
-    console.log('cb complete!');
-    console.log(req.params);
-    console.log(req.post);
+app.post('/api/parse/', function(req, res) {
+    var spotifyPlaylistURL = req.body.spotifyPlaylistURL;
+    // https://open.spotify.com/user/droldness/playlist/2RxIXT72Emcypl7IFWUCW1
+    var parts = url.parse(spotifyPlaylistURL);
+    parts = parts.path.split('/');
+    console.log(parts);
+    var userID = parts[2];
+    var playlistID = parts[4];
+
+    var tracks = getPlaylist(userID, playlistID).then(function(data) {
+        var html = '';
+        for(var i = 0, j = tracks.length; i < j; i++) {
+            html += tracks[i].artist + ' - ' + tracks[i].song + '<br>'
+        }
+        res.send(html);
+    });
+
+
+
 });
 
 app.get('/add/', function(req, res) {
-    var html = '<form method="post" action="/api/watch"><input type="text" placeholder="Query Name" name="queryName"><br><input type="text" placeholder="Disk Path" name="diskPath"><br><button type="submit" name="submit">Add</button></form>';
+    var html = '<form enctype="application/json" method="post" action="/api/parse"><input type="text" placeholder="Spotify Playlist URL" name="spotifyPlaylistURL"><br><button type="submit" name="submit">DO IT!</button></form>';
     res.send(html);
 });
 
@@ -103,10 +117,20 @@ spotifyApi.clientCredentialsGrant()
         console.log('Something went wrong when retrieving an access token', err.message);
     });
 
+var getPlaylist = function(userID, playlistID) {
+    var tracks;
+    tracks = spotifyApi.getPlaylistTracks(userID, playlistID)
+        .then(function(data) {
+            return parsePlaylist(data.body);
 
+        }, function(err) {
+            console.log('Something went wrong!', err);
+        });
+
+    return this;
+}
 
 function parsePlaylist(pl) {
-    //console.log(pl);
     var tracks = [];
     for(var i = 0, j = pl.items.length; i < j; i++) {
         tracks.push({
