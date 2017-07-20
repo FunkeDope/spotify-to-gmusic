@@ -59,9 +59,8 @@ app.post('/api/parse/', function(req, res) {
     parts = parts.path.split('/');
     var userID = parts[2];
     var playlistID = parts[4];
-    var offset = 0;
 
-    getPlaylist(userID, playlistID, offset).then(function(data) {
+    getPlaylist(userID, playlistID).then(function(data) {
         console.log(data.length);
         res.send(data);
     }).catch(function(err) {
@@ -95,8 +94,8 @@ spotifyApi.clientCredentialsGrant()
     });
 
 
-getPlaylist = function(userID, playlistID, offset, t) {
-    //console.log('getting with offset: ' + offset);
+getPlaylist = function(userID, playlistID, o, t) {
+    var offset = o ? o : 0
     var promise = spotifyApi.getPlaylistTracks(userID, playlistID, {
             offset: offset
         })
