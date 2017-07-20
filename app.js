@@ -24,7 +24,7 @@ winston.configure({
 //spotify goodness
 var SpotifyWebApi = require('spotify-web-api-node');
 
-
+var getPlaylist;
 
 //routes and rest triggers
 var express = require("express");
@@ -49,22 +49,7 @@ app.get('/log/', function(req, res) {
         res.send('<pre>' + contents + '</pre>');
     });
 });
-app.get('/api/get/:userID/:playlistID', function(req, res) {
-    var spotifyPlaylistID = req.params.playlistID;
-    var userID = req.params.userID;
-    var tracks;
-    spotifyApi.getPlaylistTracks(userID, spotifyPlaylistID)
-        .then(function(data) {
-            tracks = parsePlaylist(data.body);
-            var html = '';
-            for(var i = 0, j = tracks.length; i < j; i++) {
-                html += tracks[i].artist + ' - ' + tracks[i].song + '<br>'
-            }
-            res.send(html);
-        }, function(err) {
-            console.log('Something went wrong!', err);
-        });
-});
+
 
 app.post('/api/parse/', function(req, res) {
     var spotifyPlaylistURL = req.body.spotifyPlaylistURL;
@@ -72,24 +57,16 @@ app.post('/api/parse/', function(req, res) {
     // https://open.spotify.com/user/droldness/playlist/2RxIXT72Emcypl7IFWUCW1
     var parts = url.parse(spotifyPlaylistURL);
     parts = parts.path.split('/');
-    console.log(parts);
     var userID = parts[2];
     var playlistID = parts[4];
+    var offset = 0;
 
-    spotifyApi.getPlaylistTracks(userID, playlistID).then(function(data) {
-        //var tracks = parsePlaylist(data.body); //just artist and song
-        var tracks = data.body; //full resp
-
-        res.send(tracks);
-
-    }, function(err) {
-        console.log('Something went wrong!', err);
+    getPlaylist(userID, playlistID, offset).then(function(data) {
+        console.log(data.length);
+        res.send(data);
+    }).catch(function(err) {
+        console.log('err getting playlist tracks: ', err);
     });
-});
-
-app.get('/add/', function(req, res) {
-    var html = '<form enctype="application/json" method="post" action="/api/parse"><input type="text" placeholder="Spotify Playlist URL" name="spotifyPlaylistURL"><br><button type="submit" name="submit">DO IT!</button></form>';
-    res.send(html);
 });
 
 app.all('/*', function(req, res, next) {
@@ -118,14 +95,29 @@ spotifyApi.clientCredentialsGrant()
     });
 
 
+getPlaylist = function(userID, playlistID, offset, t) {
+    //console.log('getting with offset: ' + offset);
+    var promise = spotifyApi.getPlaylistTracks(userID, playlistID, {
+            offset: offset
+        })
+        .then(function(data) {
+                var promise2;
+                var pl = data.body;
+                var tracks = !t ? pl.items : t.concat(pl.items);
 
-function parsePlaylist(pl) {
-    var tracks = [];
-    for(var i = 0, j = pl.items.length; i < j; i++) {
-        tracks.push({
-            song: pl.items[i].track.name,
-            artist: pl.items[i].track.artists[0].name
-        });
-    }
-    return tracks;
+                if(pl.total > pl.limit + pl.offset) {
+                    //console.log('total: ' + pl.total + ' | limit: ' + pl.limit + ' | offset: ' + pl.offset);
+                    promise2 = getPlaylist(userID, playlistID, offset + pl.limit, tracks).then(function(data) {
+                        return data;
+                    }).catch(function(err) {
+                        console.log('err in recursion', err);
+                    });
+                }
+                console.log('total tracks so far: ' + tracks.length);
+                return promise2 ? promise2 : tracks;
+            },
+            function(err) {
+                console.log('Something went wrong!', err);
+            });
+    return promise;
 }

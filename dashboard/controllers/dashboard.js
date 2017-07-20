@@ -18,12 +18,12 @@ function LookupCtrl($scope, $http, $q, $mdPanel) {
             $scope.playlist = resp.data;
             console.log($scope.playlist);
             $scope.tracks = [];
-            for(var i = 0, j = $scope.playlist.items.length; i < j; i++) {
+            for(var i = 0, j = $scope.playlist.length; i < j; i++) {
                 $scope.tracks.push({
-                    song: $scope.playlist.items[i].track.name,
-                    artist: $scope.playlist.items[i].track.artists[0].name,
-                    album: $scope.playlist.items[i].track.album.name,
-                    art: $scope.playlist.items[i].track.album.images[0].url
+                    song: $scope.playlist[i].track.name,
+                    artist: $scope.playlist[i].track.artists[0].name,
+                    album: $scope.playlist[i].track.album.name,
+                    art: $scope.playlist[i].track.album.images[0].url
                 });
             }
         });

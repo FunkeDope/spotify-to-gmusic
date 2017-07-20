@@ -13,7 +13,7 @@
         <div layout="row">
             <div flex="40">
                 <md-list class="md-dense">
-                    <md-subheader class="md-no-sticky">Got {{tracks.length}} / {{playlist.total}}</md-subheader>
+                    <md-subheader class="md-no-sticky">{{tracks.length}} Total</md-subheader>
                     <md-list-item class="md-3-line" ng-repeat="track in tracks" ng-click="null">
                         <img ng-src="{{track.art}}" class="md-avatar" alt="{{item.album}}" />
                         <div class="md-list-item-text" layout="column">
