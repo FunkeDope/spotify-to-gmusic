@@ -68,6 +68,7 @@ app.get('/api/get/:userID/:playlistID', function(req, res) {
 
 app.post('/api/parse/', function(req, res) {
     var spotifyPlaylistURL = req.body.spotifyPlaylistURL;
+    console.log('attempting to parse:', spotifyPlaylistURL);
     // https://open.spotify.com/user/droldness/playlist/2RxIXT72Emcypl7IFWUCW1
     var parts = url.parse(spotifyPlaylistURL);
     parts = parts.path.split('/');
@@ -75,16 +76,15 @@ app.post('/api/parse/', function(req, res) {
     var userID = parts[2];
     var playlistID = parts[4];
 
-    var tracks = getPlaylist(userID, playlistID).then(function(data) {
-        var html = '';
-        for(var i = 0, j = tracks.length; i < j; i++) {
-            html += tracks[i].artist + ' - ' + tracks[i].song + '<br>'
-        }
-        res.send(html);
+    spotifyApi.getPlaylistTracks(userID, playlistID).then(function(data) {
+        //var tracks = parsePlaylist(data.body); //just artist and song
+        var tracks = data.body; //full resp
+
+        res.send(tracks);
+
+    }, function(err) {
+        console.log('Something went wrong!', err);
     });
-
-
-
 });
 
 app.get('/add/', function(req, res) {
@@ -117,18 +117,7 @@ spotifyApi.clientCredentialsGrant()
         console.log('Something went wrong when retrieving an access token', err.message);
     });
 
-var getPlaylist = function(userID, playlistID) {
-    var tracks;
-    tracks = spotifyApi.getPlaylistTracks(userID, playlistID)
-        .then(function(data) {
-            return parsePlaylist(data.body);
 
-        }, function(err) {
-            console.log('Something went wrong!', err);
-        });
-
-    return this;
-}
 
 function parsePlaylist(pl) {
     var tracks = [];

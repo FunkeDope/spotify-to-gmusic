@@ -1,17 +1,40 @@
-<section ng-controller="RecentCtrl" layout="row">
-	<div flex="40">
-		<md-list class="md-dense" flex>
-			<md-subheader class="md-no-sticky">Recent Additions</md-subheader>
-			<md-list-item class="md-2-line" ng-repeat="show in shows" ng-mouseover="setActive(show)">
-				<img ng-src="{{show.posterPath}}" class="md-avatar" />
-				<!--<img ng-src="{{baseURL}}{{show.metadata.poster_path}}" class="md-avatar" alt="{{item.who}}" />-->
-				<div class="md-list-item-text" layout="column">
-					<h3>{{show.Title}}</h3>
-					<p>{{show.TimeAssigned}}</p>
-					<!--<h4>{{show.Title}}</h4>
-				<p>{{show.metadata.overview}}</p>-->
-				</div>
-			</md-list-item>
-		</md-list>
-	</div>
+<section ng-controller="LookupCtrl">
+    <md-content>
+        <form name="lookup" flex="100">
+            <div layout="row">
+                <md-input-container flex>
+                    <label>Spotify URL</label>
+                    <input name="spotifyURL" ng-model="spotifyURL">
+                </md-input-container>
+                <md-button class="md-primary md-raised" ng-click="lookUp(spotifyURL)">GO</md-button>
+            </div>
+        </form>
+        <md-divider></md-divider>
+        <div layout="row">
+            <div flex="40">
+                <md-list class="md-dense">
+                    <md-subheader class="md-no-sticky">Got {{tracks.length}} / {{playlist.total}}</md-subheader>
+                    <md-list-item class="md-3-line" ng-repeat="track in tracks" ng-click="null">
+                        <img ng-src="{{track.art}}" class="md-avatar" alt="{{item.album}}" />
+                        <div class="md-list-item-text" layout="column">
+                            <h3><strong>{{track.song}}</strong></h3>
+                            <h4>{{ track.artist }}</h4>
+                            <p>{{ track.album }}</p>
+                        </div>
+                    </md-list-item>
+                </md-list>
+            </div>
+            <div flex="10" ng-if="tracks.length">
+                <md-button class="md-raised md-primary">
+                    Import to Google Music
+                    <md-icon>library_music</md-icon>
+                </md-button>
+            </div>
+
+            <div flex ng-if="track.length">
+                [placeholder]
+            </div>
+
+        </div>
+    </md-content>
 </section>

@@ -1,8 +1,15 @@
 {
-	"bb.beautify.onSave": true,
-	"path": {
-		"**min**.js": {
-			"bb.beautify.onSave": false
-		}
-	}
+    "bb.beautify.onSave": true,
+    "path": {
+        "**min**.js": {
+            "bb.beautify.onSave": false
+        }
+    },
+    "highlightMatches": true,
+    "language": {
+        "javascript": {
+            "linting.prefer": ["JSHint"],
+            "linting.usePreferredOnly": true
+        }
+    }
 }
