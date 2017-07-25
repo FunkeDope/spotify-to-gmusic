@@ -10,6 +10,8 @@ var config = require('./config'),
     winston = require('winston'),
     url = require('url');
 
+//spotify goodness
+var SpotifyWebApi = require('spotify-web-api-node');
 
 winston.configure({
     transports: [
@@ -21,8 +23,24 @@ winston.configure({
     ]
 });
 
-//spotify goodness
-var SpotifyWebApi = require('spotify-web-api-node');
+//fuckin google shit
+var PlayMusic = require('playmusic');
+var pm = new PlayMusic();
+pm.login({
+    email: config.google.user,
+    password: config.google.appPW,
+    androidId: config.google.androidID
+}, function(err, data) {
+    if(err) console.error(err);
+    // place code here
+    console.log('got master token:', data);
+    pm.init({
+        androidId: data.androidId,
+        masterToken: data.masterToken
+    }, function(err) {
+        if(err) console.error(err);
+    })
+});
 
 var getPlaylist;
 
@@ -51,6 +69,7 @@ app.get('/log/', function(req, res) {
 });
 
 
+//takes a spotify playlist url, parses it, and returns and array of tracks
 app.post('/api/parse/', function(req, res) {
     var spotifyPlaylistURL = req.body.spotifyPlaylistURL;
     console.log('attempting to parse:', spotifyPlaylistURL);
@@ -62,11 +81,64 @@ app.post('/api/parse/', function(req, res) {
 
     getPlaylist(userID, playlistID).then(function(data) {
         console.log(data.length);
+        var playlist = {}
         res.send(data);
     }).catch(function(err) {
         console.log('err getting playlist tracks: ', err);
     });
 });
+
+
+app.post('/api/lookup/', function(req, res) {
+    var tracks = req.body.tracks;
+    console.log(tracks);
+});
+
+app.get('/api/list/gpl', function(req, res) {
+    pm.getPlayLists(function(err, data) {
+        var resp;
+        if(err) {
+            console.log(err);
+            resp = err;
+        }
+        else {
+            resp = data.data.items;
+        }
+        res.send(resp);
+    });
+});
+
+app.post('/api/importtogpm', function(req, res) {
+    var tracks = req.body.tracks;
+    var googleTracks = [];
+    var promises = [];
+    for(var i = 0, j = 5; i < j; i++) {
+        var promise = Promise.resolve(pm.search(tracks[i].song + ' ' + tracks[i].artist, 5, function(err, data) { // max 5 results
+            if(err) {
+                console.log(err);
+            }
+            else {
+                var song = data.entries.sort(function(a, b) { // sort by match score
+                    return a.score < b.score;
+                }).shift(); // take first song
+                return song;
+            }
+        }));
+        promises.push(promise);
+    }
+
+    Promise.all(promises).then(function(data) {
+        console.log(data);
+        res.send(data);
+    }).catch(function(err) {
+        console.log(err);
+        res.send(err);
+
+    });
+});
+
+
+
 
 app.all('/*', function(req, res, next) {
     // Just send the index.html for other files to support HTML5Mode

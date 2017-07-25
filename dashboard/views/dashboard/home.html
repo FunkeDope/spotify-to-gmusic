@@ -11,28 +11,41 @@
         </form>
         <md-divider></md-divider>
         <div layout="row">
-            <div flex="40">
+            <div flex>
                 <md-list class="md-dense">
-                    <md-subheader class="md-no-sticky">{{tracks.length}} Total</md-subheader>
+                    <md-subheader class="md-no-sticky">{{tracks.length}} Songs on Spotify Playlist</md-subheader>
                     <md-list-item class="md-3-line" ng-repeat="track in tracks" ng-click="null">
                         <img ng-src="{{track.art}}" class="md-avatar" alt="{{item.album}}" />
                         <div class="md-list-item-text" layout="column">
                             <h3><strong>{{track.song}}</strong></h3>
-                            <h4>{{ track.artist }}</h4>
-                            <p>{{ track.album }}</p>
+                            <h4>{{track.artist}}</h4>
+                            <p>{{track.album}}</p>
                         </div>
                     </md-list-item>
                 </md-list>
             </div>
-            <div flex="10" ng-if="tracks.length">
-                <md-button class="md-raised md-primary">
-                    Import to Google Music
+            <div flex>
+                <md-button ng-click="getGooglePlaylists()" class="md-raised md-primary">
+                    Get Google Playlists
+                    <md-icon>library_music</md-icon>
+                </md-button>
+                <md-button ng-click="importPlaylistToGoogle()" class="md-raised md-primary">
+                    Import as New Playlist
                     <md-icon>library_music</md-icon>
                 </md-button>
             </div>
-
-            <div flex ng-if="track.length">
-                [placeholder]
+            <div flex ng-if="gpPlaylists.length">
+                <md-list class="md-dense">
+                    <md-subheader class="md-no-sticky">{{gpPlaylists.length}} Google Playlists Found</md-subheader>
+                    <md-list-item class="md-3-line" ng-repeat="gpl in gpPlaylists" ng-click="null">
+                        <!--<img ng-src="{{track.art}}" class="md-avatar" alt="{{item.album}}" />-->
+                        <div class="md-list-item-text" layout="column">
+                            <h3><strong>{{gpl.name}}</strong></h3>
+                            <h4>{{gpl.ownerName}}</h4>
+                            <p>{{gpl.lastModifiedTimestamp | date: short}}</p>
+                        </div>
+                    </md-list-item>
+                </md-list>
             </div>
 
         </div>
