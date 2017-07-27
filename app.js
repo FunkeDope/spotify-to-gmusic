@@ -18,38 +18,17 @@ const spotifyApi = new SpotifyWebApi({
     clientSecret: config.spotify.clientSecret,
     redirectUri: 'http://localhost:3000/api/callback'
 });
-spotifyApi.clientCredentialsGrant().then(function(data) {
-        //console.log('The access token expires in ' + data.body['expires_in']);
-        //console.log('The access token is ' + data.body['access_token']);
-        // Save the access token so that it's used in future calls
-        spotifyApi.setAccessToken(data.body['access_token']);
-    },
-    function(err) {
-        console.log('Something went wrong when retrieving an access token', err.message);
-    }
-);
-
 //fuckin google shit
 const PlayMusic = require('playmusic');
 const pm = new PlayMusic();
-pm.login({
-    email: config.google.user,
-    password: config.google.appPW,
-    androidId: config.google.androidID
-}, function(err, data) {
-    if(err) console.error(err);
-    pm.init({
-        androidId: data.androidId,
-        masterToken: data.masterToken
-    }, function(err) {
-        if(err) console.error(err);
-    })
-});
 
+//local functions and wrappers
 var spGetPlaylistTracks,
     gpmLookupSong,
     gpmCreatePlaylist,
     gpmAddToPlaylist;
+
+
 
 //Express Server setup
 //routes and rest triggers
@@ -194,21 +173,61 @@ app.post('/api/creategpmplaylist', function(req, res) {
     });
 });
 
-
-
-
 app.all('/*', function(req, res, next) {
     // Just send the index.html for other files to support HTML5Mode
     res.sendFile('dashboard/index.html', {
         root: __dirname
     });
 });
+/* ----- end express seetup ------- */
+
+
+
+//connect to the two APIs
+spConnectToAPI();
+gpmConnectToAPI();
 
 
 
 
 /* promise wrappers and logic*/
+function spConnectToAPI() {
+    spotifyApi.clientCredentialsGrant().then(function(data) {
+            console.log('Spotify Access Token Granted for ' + data.body['expires_in'] + ' seconds.');
+            //console.log('The access token is ' + data.body['access_token']);
+            // Save the access token so that it's used in future calls
+            spotifyApi.setAccessToken(data.body['access_token']);
+        },
+        function(err) {
+            console.log('Something went wrong when retrieving an access token', err.message);
+        }
+    )
+};
 
+function gpmConnectToAPI() {
+    pm.login({
+        email: config.google.user,
+        password: config.google.appPW,
+        androidId: config.google.androidID
+    }, function(err, data) {
+        if(err) {
+            console.error(err)
+        };
+
+        pm.init({
+                androidId: data.androidId,
+                masterToken: data.masterToken
+            },
+            function(err) {
+                if(err) {
+                    console.error(err)
+                }
+                else {
+                    console.log('GPM Token Granted for AndroidID: ' + data.androidId);
+                }
+            });
+    });
+}
 
 gpmLookupSong = function(track) {
     return new Promise(function(resolve, reject) {
