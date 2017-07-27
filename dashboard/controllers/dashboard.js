@@ -8,8 +8,8 @@ function LookupCtrl($scope, $http, $q, $mdPanel) {
     'use strict';
     $scope.spotifyURL = '';
     $scope.spTracks = [];
-    $scope.spPlaylist;
-    $scope.gpPlaylists;
+    $scope.spPlaylist = {};
+    $scope.gpPlaylists = {};
     $scope.gpTracks = {
         tracks: [],
         errors: []
@@ -17,10 +17,16 @@ function LookupCtrl($scope, $http, $q, $mdPanel) {
 
     //lookup a spotify playlist and get the tracklist
     $scope.lookUp = function(url) {
+        //reset everything!
+        $scope.spTracks = [];
+        $scope.spPlaylist = {};
+        $scope.gpTracks.tracks = [];
+        $scope.gpTracks.errors = [];
+
         var payload = {
             spotifyPlaylistURL: url
         };
-        $http.post('/api/parse/', JSON.stringify(payload)).then(function(resp) {
+        $http.post('/api/getspplaylist/', JSON.stringify(payload)).then(function(resp) {
             $scope.spPlaylist = {
                 tracks: resp.data[0],
                 info: resp.data[1]
@@ -68,11 +74,12 @@ function LookupCtrl($scope, $http, $q, $mdPanel) {
         if($scope.gpTracks.tracks.length > 0) {
             var payload = {
                 tracks: $scope.gpTracks.tracks,
-                plName: $scope.spPlaylist.info.name
+                plName: $scope.spPlaylist.info.name,
+                plDescription: $scope.spPlaylist.info.description || ''
             }
 
             $http.post('/api/creategpmplaylist', JSON.stringify(payload)).then(function(data) {
-
+                console.log(data);
             }).catch(function(err) {
                 console.err('err creating playlist', err);
             });
@@ -81,7 +88,6 @@ function LookupCtrl($scope, $http, $q, $mdPanel) {
             console.err('no tracks!')
         }
     };
-
 
 
 

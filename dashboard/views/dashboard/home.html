@@ -18,7 +18,7 @@
                     <md-list-item class="md-3-line" ng-repeat="track in spTracks track by $index" ng-click="null">
                         <img ng-src="{{track.art}}" class="md-avatar" alt="{{track.album}}" />
                         <div class="md-list-item-text" layout="column">
-                            <h3><strong>{{$index}}. {{track.song}}</strong></h3>
+                            <h3><strong>{{$index + 1}}. {{track.song}}</strong></h3>
                             <h4>{{track.artist}}</h4>
                             <p>{{track.album}}</p>
                         </div>
@@ -61,7 +61,7 @@
                     <md-list-item class="md-3-line" ng-repeat="gpTrack in gpTracks.tracks track by $index" ng-click="null">
                         <img ng-src="{{gpTrack.track.albumArtRef[0].url}}" class="md-avatar" alt="{{gpTrack.track.album}}" />
                         <div class="md-list-item-text" layout="column">
-                            <h3><strong>{{$index}}. {{gpTrack.track.title}}</strong></h3>
+                            <h3><strong>{{$index + 1}}. {{gpTrack.track.title}}</strong></h3>
                             <h4>{{gpTrack.track.artist}}</h4>
                             <p>{{gpTrack.track.album}}</p>
                         </div>

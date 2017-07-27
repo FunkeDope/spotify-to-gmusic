@@ -1,39 +1,43 @@
 'use strict';
 require('console-stamp')(console, 'HH:MM:ss.l'); //timestamp all console logs
-var config = require('./config'),
+const config = require('./config'),
     //request = require("request"),
     //cheerio = require("cheerio"),
     http = require('http'),
     util = require('util'),
     //sanitize = require("sanitize-filename"),
     //fs = require('fs'),
-    winston = require('winston'),
     url = require('url');
+const Entities = require('html-entities').XmlEntities;
+const entities = new Entities();
 
 //spotify goodness
-var SpotifyWebApi = require('spotify-web-api-node');
-
-winston.configure({
-    transports: [
-		new(winston.transports.Console)(),
-		new(winston.transports.File)({
-            filename: 'log.log',
-            json: false
-        })
-    ]
+const SpotifyWebApi = require('spotify-web-api-node');
+const spotifyApi = new SpotifyWebApi({
+    clientId: config.spotify.clientID,
+    clientSecret: config.spotify.clientSecret,
+    redirectUri: 'http://localhost:3000/api/callback'
 });
+spotifyApi.clientCredentialsGrant().then(function(data) {
+        //console.log('The access token expires in ' + data.body['expires_in']);
+        //console.log('The access token is ' + data.body['access_token']);
+        // Save the access token so that it's used in future calls
+        spotifyApi.setAccessToken(data.body['access_token']);
+    },
+    function(err) {
+        console.log('Something went wrong when retrieving an access token', err.message);
+    }
+);
 
 //fuckin google shit
-var PlayMusic = require('playmusic');
-var pm = new PlayMusic();
+const PlayMusic = require('playmusic');
+const pm = new PlayMusic();
 pm.login({
     email: config.google.user,
     password: config.google.appPW,
     androidId: config.google.androidID
 }, function(err, data) {
     if(err) console.error(err);
-    // place code here
-    //console.log('got master token:', data);
     pm.init({
         androidId: data.androidId,
         masterToken: data.masterToken
@@ -42,15 +46,16 @@ pm.login({
     })
 });
 
-var getPlaylistTracks,
-    lookupOnGoogle,
+var spGetPlaylistTracks,
+    gpmLookupSong,
     gpmCreatePlaylist,
     gpmAddToPlaylist;
 
+//Express Server setup
 //routes and rest triggers
-var express = require("express");
-var bodyParser = require("body-parser");
-var app = express();
+const express = require("express");
+const bodyParser = require("body-parser");
+const app = express();
 app.use(express.static(__dirname + '/dashboard'));
 app.use('/scripts', express.static(__dirname + '/bower_components/'));
 //Here we are configuring express to use body-parser as middle-ware.
@@ -72,33 +77,26 @@ app.use(function(error, req, res, next) {
 });
 //start the express server
 var server = app.listen(3000, function() {});
-server.timeout = 240000;
+server.timeout = 2 * 60 * 1000; //2min timeout
+
+//routes
 app.get('/', function(req, res) {
     res.redirect('/dashboard/index.html');
 });
-app.get('/log/', function(req, res) {
-    fs.readFile('log.log', 'utf8', function(err, contents) {
-        //contents = contents.split("\n");
-        //json = JSON.stringify(json, null, 4);
-        res.send('<pre>' + contents + '</pre>');
-    });
-});
-
 
 //takes a spotify playlist url, parses it, and returns and array of tracks
-app.post('/api/parse/', function(req, res) {
+app.post('/api/getspplaylist/', function(req, res) {
     var spotifyPlaylistURL = req.body.spotifyPlaylistURL;
     console.log('attempting to parse:', spotifyPlaylistURL);
-    // https://open.spotify.com/user/droldness/playlist/2RxIXT72Emcypl7IFWUCW1
     var parts = url.parse(spotifyPlaylistURL);
     parts = parts.path.split('/');
-    var userID = parts[2];
+    var userID = parts[2]; //TODO: parse playlist url better
     var playlistID = parts[4];
 
     var promises = [];
 
     //gets all the tracks in a playlist
-    var promise = getPlaylistTracks(userID, playlistID).then(function(data) {
+    var promise = spGetPlaylistTracks(userID, playlistID).then(function(data) {
         return data;
     }).catch(function(err) {
         console.log('err getting playlist tracks: ', err);
@@ -106,7 +104,7 @@ app.post('/api/parse/', function(req, res) {
     });
     promises.push(promise);
 
-    //get details about the playlist
+    //get some general details about the playlist (name, description, owner, etc)
     promise = spotifyApi.getPlaylist(userID, playlistID)
         .then(function(data) {
             return data.body;
@@ -125,12 +123,7 @@ app.post('/api/parse/', function(req, res) {
     });
 });
 
-
-app.post('/api/lookup/', function(req, res) {
-    var tracks = req.body.tracks;
-    console.log(tracks);
-});
-
+//lists the current user's gpm playlists
 app.get('/api/list/gpl', function(req, res) {
     pm.getPlayLists(function(err, data) {
         var resp;
@@ -145,13 +138,14 @@ app.get('/api/list/gpl', function(req, res) {
     });
 });
 
+//looks up songs on gpm one at a time
 app.post('/api/lookupongpm', function(req, res) {
     req.socket.setTimeout(10 * 60 * 1000); // 10 minutes timeout just for this POST
     var tracks = req.body.tracks;
     var googleTracks = [];
     var promises = [];
     for(var i = 0, j = tracks.length; i < j; i++) {
-        promises.push(lookupOnGoogle(tracks[i]));
+        promises.push(gpmLookupSong(tracks[i]));
     }
     Promise.all(promises).then(function(data) {
         //console.log(data);
@@ -163,19 +157,22 @@ app.post('/api/lookupongpm', function(req, res) {
     });
 });
 
+//creates a gpm pl with a name and description, then populates it with tracks
 app.post('/api/creategpmplaylist', function(req, res) {
     var gpmPlaylist = {
-        name: req.body.plName,
+        name: entities.decode(req.body.plName), //spotify gives us html entities we need to convert before sending to google
+        description: entities.decode(req.body.plDescription),
         tracks: req.body.tracks
     };
 
     console.log('creating playlist: ' + gpmPlaylist.name, 'total tracks: ' + gpmPlaylist.tracks.length);
 
-    gpmCreatePlaylist(gpmPlaylist.name).then(function(data) {
-        //now we need to insert tracks into the playlist
+    //make the gpm pl
+    gpmCreatePlaylist(gpmPlaylist.name, gpmPlaylist.description).then(function(data) {
         var plID = data.mutate_response[0].id;
         console.log('success! pl created!', plID, data);
 
+        //now we need to insert tracks into the playlist
         //create an array of only the trackIDs
         var trackIDs = [];
         for(var i = 0, j = gpmPlaylist.tracks.length; i < j; i++) {
@@ -186,18 +183,15 @@ app.post('/api/creategpmplaylist', function(req, res) {
 
         gpmAddToPlaylist(trackIDs, plID).then(function(data) {
             console.log('success adding to pl!', data);
+            res.send(data);
         }).catch(function(err) {
             console.error('error adding to gpm pl', err);
+            res.send(err);
         })
-
-
 
     }).catch(function(err) {
         console.log('err creating pl!', err);
     });
-
-
-    res.send('yahhhh');
 });
 
 
@@ -210,7 +204,13 @@ app.all('/*', function(req, res, next) {
     });
 });
 
-lookupOnGoogle = function(track) {
+
+
+
+/* promise wrappers and logic*/
+
+
+gpmLookupSong = function(track) {
     return new Promise(function(resolve, reject) {
         pm.search(track.artist + ' ' + track.song, 5, function(err, data) { // max 5 results
             //console.log(data.entries);
@@ -228,9 +228,9 @@ lookupOnGoogle = function(track) {
     })
 };
 
-gpmCreatePlaylist = function(name) {
+gpmCreatePlaylist = function(name, description) {
     return new Promise(function(resolve, reject) {
-        pm.addPlayList(name, function(err, data) {
+        pm.addPlayList(name, description, function(err, data) {
             return resolve(data);
         }, function(err) {
             console.log(err);
@@ -250,25 +250,8 @@ gpmAddToPlaylist = function(trackIDs, plID) {
     })
 }
 
-// credentials are optional
-var spotifyApi = new SpotifyWebApi({
-    clientId: config.spotify.clientID,
-    clientSecret: config.spotify.clientSecret,
-    redirectUri: 'http://localhost:3000/api/callback'
-});
-spotifyApi.clientCredentialsGrant()
-    .then(function(data) {
-        //console.log('The access token expires in ' + data.body['expires_in']);
-        //console.log('The access token is ' + data.body['access_token']);
 
-        // Save the access token so that it's used in future calls
-        spotifyApi.setAccessToken(data.body['access_token']);
-    }, function(err) {
-        console.log('Something went wrong when retrieving an access token', err.message);
-    });
-
-
-getPlaylistTracks = function(userID, playlistID, o, t) {
+spGetPlaylistTracks = function(userID, playlistID, o, t) {
     var offset = o ? o : 0
     var promise = spotifyApi.getPlaylistTracks(userID, playlistID, {
             offset: offset
@@ -280,7 +263,7 @@ getPlaylistTracks = function(userID, playlistID, o, t) {
 
                 if(pl.total > pl.limit + pl.offset) {
                     //console.log('total: ' + pl.total + ' | limit: ' + pl.limit + ' | offset: ' + pl.offset);
-                    promise2 = getPlaylistTracks(userID, playlistID, offset + pl.limit, tracks).then(function(data) {
+                    promise2 = spGetPlaylistTracks(userID, playlistID, offset + pl.limit, tracks).then(function(data) {
                         return data;
                     }).catch(function(err) {
                         console.log('err in recursion', err);

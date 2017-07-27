@@ -1,24 +1,22 @@
 {
-  "name": "spotify-to-gmusic",
-  "version": "1.0.0",
-  "description": "yup",
-  "main": "app.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "body-parser": "^1.17.2",
-    "console-stamp": "^0.2.0",
-    "crypto": "0.0.3",
-    "events": "^1.1.0",
-    "express": "^4.13.4",
-    "playmusic": "^2.2.1",
-    "request": "^2.69.0",
-    "require": "^2.4.20",
-    "rsa-pem-from-mod-exp": "^0.8.4",
-    "spotify-web-api-node": "^2.4.0",
-    "winston": "^2.3.0"
-  }
+    "name": "spotify-to-gmusic",
+    "version": "1.0.0",
+    "description": "converts a spotify playlist into a google play music playlist",
+    "main": "app.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "body-parser": "^1.17.2",
+        "console-stamp": "^0.2.0",
+        "events": "^1.1.0",
+        "express": "^4.13.4",
+        "html-entities": "^1.2.1",
+        "playmusic": "git@github.com:FunkeDope/playmusic.git#head",
+        "request": "^2.69.0",
+        "require": "^2.4.20",
+        "spotify-web-api-node": "^2.4.0"
+    }
 }
