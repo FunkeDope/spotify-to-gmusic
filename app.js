@@ -1,4 +1,3 @@
-'use strict';
 require('console-stamp')(console, 'HH:MM:ss.l'); //timestamp all console logs
 const config = require('./config'),
     //request = require("request"),
@@ -46,6 +45,7 @@ app.use(bodyParser.json({
     limit: '5mb'
 }));
 app.use(function(error, req, res, next) {
+    'use strict';
     if(!error) {
         next();
     }
@@ -60,11 +60,13 @@ server.timeout = 2 * 60 * 1000; //2min timeout
 
 //routes
 app.get('/', function(req, res) {
+    'use strict';
     res.redirect('/dashboard/index.html');
 });
 
 //takes a spotify playlist url, parses it, and returns and array of tracks
 app.post('/api/getspplaylist/', function(req, res) {
+    'use strict';
     var spotifyPlaylistURL = req.body.spotifyPlaylistURL;
     console.log('attempting to parse:', spotifyPlaylistURL);
     var parts = url.parse(spotifyPlaylistURL);
@@ -89,7 +91,7 @@ app.post('/api/getspplaylist/', function(req, res) {
             return data.body;
         }, function(err) {
             console.log('Something went wrong!', err);
-            return err
+            return err;
         });
     promises.push(promise);
 
@@ -104,6 +106,7 @@ app.post('/api/getspplaylist/', function(req, res) {
 
 //lists the current user's gpm playlists
 app.get('/api/list/gpl', function(req, res) {
+    'use strict';
     pm.getPlayLists(function(err, data) {
         var resp;
         if(err) {
@@ -119,6 +122,7 @@ app.get('/api/list/gpl', function(req, res) {
 
 //looks up songs on gpm one at a time
 app.post('/api/lookupongpm', function(req, res) {
+    'use strict';
     req.socket.setTimeout(10 * 60 * 1000); // 10 minutes timeout just for this POST
     var tracks = req.body.tracks;
     var googleTracks = [];
@@ -138,6 +142,7 @@ app.post('/api/lookupongpm', function(req, res) {
 
 //creates a gpm pl with a name and description, then populates it with tracks
 app.post('/api/creategpmplaylist', function(req, res) {
+    'use strict';
     var gpmPlaylist = {
         name: entities.decode(req.body.plName), //spotify gives us html entities we need to convert before sending to google
         description: entities.decode(req.body.plDescription),
@@ -166,7 +171,7 @@ app.post('/api/creategpmplaylist', function(req, res) {
         }).catch(function(err) {
             console.error('error adding to gpm pl', err);
             res.send(err);
-        })
+        });
 
     }).catch(function(err) {
         console.log('err creating pl!', err);
@@ -174,6 +179,7 @@ app.post('/api/creategpmplaylist', function(req, res) {
 });
 
 app.all('/*', function(req, res, next) {
+    'use strict';
     // Just send the index.html for other files to support HTML5Mode
     res.sendFile('dashboard/index.html', {
         root: __dirname
@@ -192,27 +198,29 @@ gpmConnectToAPI();
 
 /* promise wrappers and logic*/
 function spConnectToAPI() {
+    'use strict';
     spotifyApi.clientCredentialsGrant().then(function(data) {
-            console.log('Spotify Access Token Granted for ' + data.body['expires_in'] + ' seconds.');
+            console.log('Spotify Access Token Granted for ' + data.body.expires_in + ' seconds.');
             //console.log('The access token is ' + data.body['access_token']);
             // Save the access token so that it's used in future calls
-            spotifyApi.setAccessToken(data.body['access_token']);
+            spotifyApi.setAccessToken(data.body.access_token);
         },
         function(err) {
             console.log('Something went wrong when retrieving an access token', err.message);
         }
-    )
-};
+    );
+}
 
 function gpmConnectToAPI() {
+    'use strict';
     pm.login({
         email: config.google.user,
         password: config.google.appPW,
         androidId: config.google.androidID
     }, function(err, data) {
         if(err) {
-            console.error(err)
-        };
+            console.error(err);
+        }
 
         pm.init({
                 androidId: data.androidId,
@@ -220,7 +228,7 @@ function gpmConnectToAPI() {
             },
             function(err) {
                 if(err) {
-                    console.error(err)
+                    console.error(err);
                 }
                 else {
                     console.log('GPM Token Granted for AndroidID: ' + data.androidId);
@@ -230,6 +238,7 @@ function gpmConnectToAPI() {
 }
 
 gpmLookupSong = function(track) {
+    'use strict';
     return new Promise(function(resolve, reject) {
         pm.search(track.artist + ' ' + track.song, 5, function(err, data) { // max 5 results
             //console.log(data.entries);
@@ -244,10 +253,11 @@ gpmLookupSong = function(track) {
             console.log(message);
             return reject(message);
         });
-    })
+    });
 };
 
 gpmCreatePlaylist = function(name, description) {
+    'use strict';
     return new Promise(function(resolve, reject) {
         pm.addPlayList(name, description, function(err, data) {
             return resolve(data);
@@ -255,10 +265,11 @@ gpmCreatePlaylist = function(name, description) {
             console.log(err);
             return reject(err);
         });
-    })
-}
+    });
+};
 
 gpmAddToPlaylist = function(trackIDs, plID) {
+    'use strict';
     return new Promise(function(resolve, reject) {
         pm.addTrackToPlayList(trackIDs, plID, function(err, data) {
             return resolve(data);
@@ -266,12 +277,13 @@ gpmAddToPlaylist = function(trackIDs, plID) {
             console.log(err);
             return reject(err);
         });
-    })
-}
+    });
+};
 
 
 spGetPlaylistTracks = function(userID, playlistID, o, t) {
-    var offset = o ? o : 0
+    'use strict';
+    var offset = o ? o : 0;
     var promise = spotifyApi.getPlaylistTracks(userID, playlistID, {
             offset: offset
         })
@@ -295,4 +307,4 @@ spGetPlaylistTracks = function(userID, playlistID, o, t) {
                 console.log('Something went wrong!', err);
             });
     return promise;
-}
+};

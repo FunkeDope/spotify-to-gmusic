@@ -42,7 +42,7 @@ function LookupCtrl($scope, $http, $q, $mdPanel) {
                 });
             }
         });
-    }
+    };
 
 
     //look up  an array of tracks on google play music and get their unique ids
@@ -50,7 +50,7 @@ function LookupCtrl($scope, $http, $q, $mdPanel) {
         if($scope.spTracks.length > 0) {
             var payload = {
                 tracks: $scope.spTracks
-            }
+            };
             $http.post('/api/lookupongpm', JSON.stringify(payload)).then(function(resp) {
                 $scope.gpTracks.tracks = resp.data;
                 //figure out what had errors
@@ -67,7 +67,7 @@ function LookupCtrl($scope, $http, $q, $mdPanel) {
         else {
             console.log('err. no tracks.');
         }
-    }
+    };
 
     //actually do the deed and create the playlist on google!
     $scope.createGooglePlaylist = function() {
@@ -76,7 +76,7 @@ function LookupCtrl($scope, $http, $q, $mdPanel) {
                 tracks: $scope.gpTracks.tracks,
                 plName: $scope.spPlaylist.info.name,
                 plDescription: $scope.spPlaylist.info.description || ''
-            }
+            };
 
             $http.post('/api/creategpmplaylist', JSON.stringify(payload)).then(function(data) {
                 console.log(data);
@@ -85,7 +85,7 @@ function LookupCtrl($scope, $http, $q, $mdPanel) {
             });
         }
         else {
-            console.err('no tracks!')
+            console.err('no tracks!');
         }
     };
 

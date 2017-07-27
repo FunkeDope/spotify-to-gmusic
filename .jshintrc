@@ -1,11 +1,13 @@
 {
-	//"camelcase": true,
-	"curly": true,
-	"eqeqeq": true,
-	"strict": true,
-	"browser": true,
-	"devel": true,
-	"jquery": true,
-	"predef": ["angular", "zxcvbn", "exports", "EventSource", "self", "module", "rgb2hex"],
-	"loopfunc": true
+    //"camelcase": true,
+    "curly": true,
+    "eqeqeq": true,
+    "strict": true,
+    "browser": true,
+    "devel": true,
+    "jquery": true,
+    "predef": ["angular", "app", "exports", "EventSource", "self", "module"],
+    "loopfunc": true,
+    "node": true,
+    "esversion": 6
 }
