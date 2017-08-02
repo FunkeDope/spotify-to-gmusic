@@ -2,11 +2,10 @@
     //"camelcase": true,
     "curly": true,
     "eqeqeq": true,
-    "strict": true,
     "browser": true,
     "devel": true,
     "jquery": true,
-    "predef": ["angular", "app", "exports", "EventSource", "self", "module"],
+    "predef": ["angular", "app", "exports", "EventSource", "self", "module", "Vue", "VueMaterial", "axios"],
     "loopfunc": true,
     "node": true,
     "esversion": 6

@@ -33,9 +33,11 @@ var spGetPlaylistTracks,
 //routes and rest triggers
 const express = require("express");
 const bodyParser = require("body-parser");
-const app = express();
-app.use(express.static(__dirname + '/dashboard'));
+var app = express();
+//app.use(express.static(__dirname + '/dashboard'));
+app.use(express.static(__dirname + '/home'));
 app.use('/scripts', express.static(__dirname + '/bower_components/'));
+app.use('/npm', express.static(__dirname + '/node_modules/'));
 //Here we are configuring express to use body-parser as middle-ware.
 app.use(bodyParser.urlencoded({
     extended: false,
@@ -44,24 +46,20 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json({
     limit: '5mb'
 }));
-app.use(function(error, req, res, next) {
-    'use strict';
-    if(!error) {
-        next();
-    }
-    else {
-        console.error(error.stack);
-        res.send(500);
-    }
-});
+
 //start the express server
 var server = app.listen(3000, function() {});
-server.timeout = 2 * 60 * 1000; //2min timeout
 
 //routes
+/*
 app.get('/', function(req, res) {
     'use strict';
     res.redirect('/dashboard/index.html');
+});
+*/
+app.get('/', function(req, res) {
+    'use strict';
+    res.redirect('/home/index.html');
 });
 
 //takes a spotify playlist url, parses it, and returns and array of tracks
@@ -160,7 +158,7 @@ app.post('/api/creategpmplaylist', function(req, res) {
         //create an array of only the trackIDs
         var trackIDs = [];
         for(var i = 0, j = gpmPlaylist.tracks.length; i < j; i++) {
-            if(gpmPlaylist.tracks[i]) { //skip bad matches. TODO: filter this on front end maybe?
+            if(gpmPlaylist.tracks[i].track.artist !== 'error') { //skip bad matches. TODO: filter this on front end maybe?
                 trackIDs.push(gpmPlaylist.tracks[i].track.storeId);
             }
         }
@@ -178,10 +176,17 @@ app.post('/api/creategpmplaylist', function(req, res) {
     });
 });
 
-app.all('/*', function(req, res, next) {
+/*app.all('/*', function(req, res, next) {
     'use strict';
     // Just send the index.html for other files to support HTML5Mode
     res.sendFile('dashboard/index.html', {
+        root: __dirname
+    });
+});*/
+app.all('/*', function(req, res, next) {
+    'use strict';
+    // Just send the index.html for other files to support HTML5Mode
+    res.sendFile('home/index.html', {
         root: __dirname
     });
 });
