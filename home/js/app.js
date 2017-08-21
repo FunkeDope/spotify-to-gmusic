@@ -44,10 +44,7 @@ let playlistUrl = new Vue({
                             art: vm.spPlaylist.tracks[i].track.album.images.length ? vm.spPlaylist.tracks[i].track.album.images[0].url : ''
                         });
                     }
-
                     //console.log('nailed it:', vm.spTracks);
-
-
                 }).catch(function(err) {
                     console.log(err);
                 });

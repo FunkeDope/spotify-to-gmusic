@@ -1,5 +1,4 @@
 //Express Server setup
-//routes and rest triggers
 const express = require("express");
 const bodyParser = require("body-parser");
 
