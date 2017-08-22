@@ -127,7 +127,11 @@ router.post('/creategpmplaylist', function(req, res) {
 
         gpmAddToPlaylist(trackIDs, plID).then(function(data) {
             console.log('success adding to pl!', data);
-            res.send(data);
+            var ret = {
+                tracks: data.mutate_response,
+                status: 200
+            };
+            res.send(ret);
         }).catch(function(err) {
             console.error('error adding to gpm pl', err);
             res.send(err);

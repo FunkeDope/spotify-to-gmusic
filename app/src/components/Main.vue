@@ -73,6 +73,7 @@
             </md-layout>
         </md-layout>
     </div>
+    <md-dialog-alert :md-title="alert.title" :md-content="alert.statusMessage" ref="status"></md-dialog-alert>
 </div>
 </template>
 
@@ -92,12 +93,22 @@
                 gpTracks: {
                     tracks: [],
                     errors: []
+                },
+                alert: {
+                    title: '',
+                    statusMessage: ''
                 }
             };
         },
         methods: {
             lookupSpPl() {
                 let vm = this;
+                //reset everything
+                vm.spTracks = [];
+                vm.gpTracks = {
+                    tracks: [],
+                    errors: []
+                };
                 //console.log('submit: ', vm.spplURL);
                 let payload = {
                     spotifyPlaylistURL: vm.spplURL
@@ -162,11 +173,29 @@
                 };
 
                 axios.post(config.api.v1 + 'creategpmplaylist', payload).then(function(data) {
+                    if (data.status === 200) {
+                        vm.alert = {
+                            title: 'Success!',
+                            statusMessage: 'Success! Playlist added to your GPM account!'
+                        };
+                        vm.$refs['status'].open();
+                    } else {
+                        vm.alert = {
+                            title: 'Success!',
+                            statusMessage: 'Error! Something went wrong creating the playlist. Try again.'
+                        };
+                        vm.$refs['status'].open();
+                    }
                     console.log(data);
                 }).catch(function(err) {
-                    console.err('err creating playlist', err);
+                    console.error('err creating playlist', err);
+                    vm.alert = {
+                        title: 'Success!',
+                        statusMessage: 'Error! Something went wrong creating the playlist. Try again.'
+                    };
+                    vm.$refs['status'].open();
                 });
-            }
+            },
         }
     }
 
