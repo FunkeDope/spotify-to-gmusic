@@ -4,7 +4,10 @@
     "description": "converts a spotify playlist into a google play music playlist",
     "main": "app.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "server": "pm2 start app.js --watch --name api",
+        "vue": "cd app && cross-env NODE_ENV=development pm2 start node --name vue -- build/dev-server.js",
+        "dev": "npm run server | npm run vue"
     },
     "author": "",
     "license": "ISC",
