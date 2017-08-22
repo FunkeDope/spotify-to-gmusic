@@ -15,6 +15,8 @@ TODO: Make all this easier.
 
 ````npm install pm2 -g````
 
-3: Start the dev server:
+3: Go back to root and start the dev server:
 
-````npm start dev````
+````cd ..````
+
+````npm run dev````

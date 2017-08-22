@@ -77,7 +77,7 @@
 </template>
 
 <script>
-    import config from '../js/config.js';
+    import config from '../js/globals.js';
     import axios from 'axios';
     export default {
         name: 'hello',
@@ -169,6 +169,7 @@
             }
         }
     }
+
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
@@ -176,4 +177,5 @@
     .container {
         padding: 0 25px;
     }
+
 </style>
