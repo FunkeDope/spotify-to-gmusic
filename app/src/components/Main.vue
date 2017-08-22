@@ -20,7 +20,7 @@
                     <md-button class="md-raised md-primary" :disabled="!spplURL" @click="lookupSpPl">1: Lookup on Spotify</md-button>
                 </md-layout>
             </md-layout>
-        </md-layout>
+        </md-layout> 
 
         <md-layout md-row md-gutter>
             <!-- spotify -->
@@ -31,7 +31,7 @@
                 <md-list class="custom-list md-triple-line md-dense">
                     <md-list-item v-for="(track, index) in spTracks" :key="index">
                         <md-avatar>
-                            <img :src="track.art" :alt="track.album">
+                            <img :src="track.art" :alt="track.album"> 
                         </md-avatar>
 
                         <div class="md-list-text-container">
