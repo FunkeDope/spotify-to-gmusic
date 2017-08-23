@@ -1,10 +1,5 @@
 <template>
 <div>
-    <md-whiteframe>
-        <md-toolbar>
-            <h1 class="md-title">Spotify to Google Play Music Converter</h1>
-        </md-toolbar>
-    </md-whiteframe>
     <div class="container"> 
         <md-layout md-gutter md-row>
             <md-layout md-flex class="form-content">
@@ -12,8 +7,8 @@
                     <form md-flex @submit.stop.prevent="submit">
                         <md-input-container md-flex="75">
                             <label>Spotify Playlist URL</label>
-                            <md-input v-model="spplURL"></md-input>
-                        </md-input-container>
+                            <md-input @focus.native="$event.target.select()" v-model="spplURL"></md-input>
+                        </md-input-container> 
                     </form>
                 </md-layout>
                 <md-layout md-column md-flex>
@@ -80,6 +75,7 @@
 <script>
     import config from '../js/globals.js';
     import axios from 'axios';
+    import router from '@/router';
     export default {
         name: 'hello',
         data() {
@@ -138,7 +134,8 @@
             lookupOnGPM() {
                 let vm = this;
                 let payload = {
-                    tracks: vm.spTracks
+                    tracks: vm.spTracks,
+                    user: JSON.parse(vm.$ls.get('user'))
                 };
                 axios.post(config.api.v1 + 'lookupongpm', payload).then(function(resp) {
                     vm.gpTracks.tracks = resp.data;
@@ -169,7 +166,8 @@
                 var payload = {
                     tracks: vm.gpTracks.tracks,
                     plName: vm.spPlaylist.info.name,
-                    plDescription: vm.spPlaylist.info.description || ''
+                    plDescription: vm.spPlaylist.info.description || '',
+                    user: JSON.parse(vm.$ls.get('user'))
                 };
 
                 axios.post(config.api.v1 + 'creategpmplaylist', payload).then(function(data) {
@@ -196,6 +194,29 @@
                     vm.$refs['status'].open();
                 });
             },
+            
+        },
+        created: function() {
+            let vm = this;
+            //check if the user is auth'd. if not, have them login
+            let user = vm.$ls.get('user', undefined);
+            if(!user) {
+                user = {
+                    email: undefined,
+                    isAuthd: false,
+                    androidID: undefined,
+                    masterToken: undefined
+                };
+                vm.$ls.set('user', JSON.stringify(user));
+            }
+            else {
+                user = JSON.parse(user);
+            }
+
+            if(!user.isAuthd) {
+                console.log('user is not authd with google', user);
+                router.push('login');
+            }
         }
     }
 

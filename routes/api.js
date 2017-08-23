@@ -87,17 +87,24 @@ router.post('/lookupongpm', function(req, res) {
     var tracks = req.body.tracks;
     var googleTracks = [];
     var promises = [];
-    for(var i = 0, j = tracks.length; i < j; i++) {
-        promises.push(gpmLookupSong(tracks[i]));
-    }
-    Promise.all(promises).then(function(data) {
-        //console.log(data);
-        console.log('found ' + promises.length + ' matching tracks on google');
-        res.send(data);
+    var user = req.body.user;
+
+    gpmConnectToAPI(user).then(function(data) {
+        for(var i = 0, j = tracks.length; i < j; i++) {
+            promises.push(gpmLookupSong(tracks[i]));
+        }
+        Promise.all(promises).then(function(data) {
+            //console.log(data);
+            console.log('found ' + promises.length + ' matching tracks on google');
+            res.send(data);
+        }).catch(function(err) {
+            console.log(err);
+            res.send(err);
+        });
     }).catch(function(err) {
-        console.log(err);
+        console.log('error auth gpm', err);
         res.send(err);
-    });
+    })
 });
 
 //creates a gpm pl with a name and description, then populates it with tracks
@@ -111,40 +118,59 @@ router.post('/creategpmplaylist', function(req, res) {
 
     console.log('creating playlist: ' + gpmPlaylist.name, 'total tracks: ' + gpmPlaylist.tracks.length);
 
-    //make the gpm pl
-    gpmCreatePlaylist(gpmPlaylist.name, gpmPlaylist.description).then(function(data) {
-        var plID = data.mutate_response[0].id;
-        console.log('success! pl created!', plID, data);
+    var user = req.body.user;
+    gpmConnectToAPI(user).then(function(data) {
+        //make the gpm pl
+        gpmCreatePlaylist(gpmPlaylist.name, gpmPlaylist.description).then(function(data) {
+            var plID = data.mutate_response[0].id;
+            console.log('success! pl created!', plID, data);
 
-        //now we need to insert tracks into the playlist
-        //create an array of only the trackIDs
-        var trackIDs = [];
-        for(var i = 0, j = gpmPlaylist.tracks.length; i < j; i++) {
-            if(gpmPlaylist.tracks[i].track.artist !== 'error') { //skip bad matches. TODO: filter this on front end maybe?
-                trackIDs.push(gpmPlaylist.tracks[i].track.storeId);
+            //now we need to insert tracks into the playlist
+            //create an array of only the trackIDs
+            var trackIDs = [];
+            for(var i = 0, j = gpmPlaylist.tracks.length; i < j; i++) {
+                if(gpmPlaylist.tracks[i].track.artist !== 'error') { //skip bad matches. TODO: filter this on front end maybe?
+                    trackIDs.push(gpmPlaylist.tracks[i].track.storeId);
+                }
             }
-        }
 
-        gpmAddToPlaylist(trackIDs, plID).then(function(data) {
-            console.log('success adding to pl!', data);
-            var ret = {
-                tracks: data.mutate_response,
-                status: 200
-            };
-            res.send(ret);
+            gpmAddToPlaylist(trackIDs, plID).then(function(data) {
+                console.log('success adding to pl!', data);
+                var ret = {
+                    tracks: data.mutate_response,
+                    status: 200
+                };
+                res.send(ret);
+            }).catch(function(err) {
+                console.error('error adding to gpm pl', err);
+                res.send(err);
+            });
+
         }).catch(function(err) {
-            console.error('error adding to gpm pl', err);
-            res.send(err);
+            console.log('err creating pl!', err);
         });
+    }).catch(function(err) {
+        console.log('err init gpm auth', err);
+    });
+});
+
+//check if we can login and auth with gpm
+router.post('/authgpm', function(req, res) {
+    'use strict';
+    var user = req.body.user;
+    var promise = gpmConnectToAPI(user).then(function(data) {
+        console.log('success?', data);
+        res.send(data);
 
     }).catch(function(err) {
-        console.log('err creating pl!', err);
+        console.error('error authing with GPM', err);
+        res.send(err);
     });
 });
 
 //connect to the two APIs
 spConnectToAPI();
-gpmConnectToAPI();
+//gpmConnectToAPI();
 
 
 
@@ -164,29 +190,41 @@ function spConnectToAPI() {
     );
 }
 
-function gpmConnectToAPI() {
+function gpmConnectToAPI(user) {
     'use strict';
-    pm.login({
-        email: config.google.user,
-        password: config.google.appPW,
-        androidId: config.google.androidID
-    }, function(err, data) {
-        if(err) {
-            console.error(err);
+    return new Promise(function(resolve, reject) {
+        if(user.masterToken) {
+            pm.init({
+                    androidId: user.androidID,
+                    masterToken: user.masterToken
+                },
+                function(err) {
+                    if(err) {
+                        return reject(err);
+                    }
+                    else {
+                        console.log('GPM Access Granted for AndroidID: ' + user.androidID);
+                        return resolve(user);
+                    }
+                });
         }
-
-        pm.init({
-                androidId: data.androidId,
-                masterToken: data.masterToken
-            },
-            function(err) {
+        else {
+            pm.login({
+                email: user.email,
+                password: user.pass,
+                androidId: user.androidID
+            }, function(err, data) {
                 if(err) {
                     console.error(err);
+                    reject(err);
                 }
                 else {
-                    console.log('GPM Token Granted for AndroidID: ' + data.androidId);
+                    data.status = 200;
+                    resolve(data);
                 }
             });
+
+        }
     });
 }
 

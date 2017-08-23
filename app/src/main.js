@@ -4,9 +4,16 @@ import Vue from 'vue';
 import App from './App';
 import VueMaterial from 'vue-material';
 import router from './router';
+import VueLocalStorage from 'vue-localstorage';
+import Login from '@/components/Login';
 
 Vue.use(VueMaterial);
+Vue.use(VueLocalStorage, {
+    name: 'ls'
+});
+
 Vue.config.productionTip = false;
+
 
 /* eslint-disable no-new */
 new Vue({
@@ -14,6 +21,7 @@ new Vue({
     router,
     template: '<App/>',
     components: {
-        App
+        App,
+        Login
     }
 });
