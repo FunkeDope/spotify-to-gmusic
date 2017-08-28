@@ -49,7 +49,7 @@
 </template>
 
 <script>
-    import config from '@/js/globals.js';
+    import config from '@/js/globals';
     import axios from 'axios';
     import router from '@/router';
     
@@ -84,7 +84,10 @@
                             isAuthd: true
                         };
                         
-                        vm.$ls.set('user', JSON.stringify(authdUser));
+                        //update the store
+                        vm.$root.$data.user = authdUser;
+                        
+                        localStorage.setItem('user', JSON.stringify(authdUser));
                         router.push('/');
                     }
                     else {
@@ -96,7 +99,11 @@
                     vm.$refs['auth-error'].open();
                 });
             }
-        }
+            
+        },
+        /*created: function() {
+            console.log('root:',this.$root.$data.user);
+        }*/
     }
 </script>
 

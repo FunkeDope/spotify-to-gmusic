@@ -4,20 +4,41 @@ import Vue from 'vue';
 import App from './App';
 import VueMaterial from 'vue-material';
 import router from './router';
-import VueLocalStorage from 'vue-localstorage';
-import Login from '@/components/Login';
+import Login from '@/pages/Login';
 
 Vue.use(VueMaterial);
-Vue.use(VueLocalStorage, {
-    name: 'ls'
-});
 
 Vue.config.productionTip = false;
 
 
+//basic user store from localstorage
+let user = JSON.parse(localStorage.getItem('user')) || undefined;
+if(!user || !user.isAuthd) {
+    user = {
+        email: undefined,
+        isAuthd: false,
+        androidID: undefined,
+        masterToken: undefined
+    };
+    localStorage.setItem('user', JSON.stringify(user));
+}
+const store = {
+    user: user,
+    spotify: {
+        info: {},
+        tracks: []
+    },
+    google: {
+        info: {},
+        tracks: [],
+        errors: []
+    }
+};
+
 /* eslint-disable no-new */
 new Vue({
     el: '#app',
+    data: store,
     router,
     template: '<App/>',
     components: {

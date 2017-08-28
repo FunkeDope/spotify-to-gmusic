@@ -3,7 +3,7 @@
     <md-whiteframe>
         <md-toolbar>
             <h2 style="flex:1" class="md-title">Spotify to Google Play Music Converter</h2>
-            <router-link tag="md-button" to="/login">{{user.email}}</router-link>
+            <router-link tag="md-button" to="/login">{{email}}</router-link>
             <md-menu md-size="4" md-direction="bottom left">
               <md-button md-menu-trigger class="md-icon-button"><md-icon>menu</md-icon></md-button>
 
@@ -25,27 +25,19 @@
     import router from '@/router';
     export default {
         name: 'myheader',
-        data() {
-            return {
-                user: {}
-            }
-        },
         methods: {
             signOut: function() {
-                this.$ls.remove('user');
+                localStorage.removeItem('user');
+                this.$root.$data.user = {};
                 router.push('/login');
             }
         },
-        created: function() {
-            let vm = this;
-            let user = this.$ls.get('user', undefined);
-            if(user) { 
-                vm.user = JSON.parse(this.$ls.get('user'));
+        computed: {
+            email: function() {
+                return this.$root.$data.user.email
             }
-            else {
-                router.push('/login');
-            }
-        }
+        }       
+        
     }
 
 </script>
