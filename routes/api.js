@@ -23,6 +23,8 @@ const spotifyApi = new SpotifyWebApi({
 const PlayMusic = require('playmusic');
 const pm = new PlayMusic();
 
+var reAuthTimer; //timer to reauth with spotify
+
 
 //takes a spotify playlist url, parses it, and returns and array of tracks
 router.post('/getspplaylist/', function(req, res) {
@@ -111,8 +113,8 @@ router.post('/lookupongpm', function(req, res) {
 router.post('/creategpmplaylist', function(req, res) {
     'use strict';
     var gpmPlaylist = {
-        name: entities.decode(req.body.plName), //spotify gives us html entities we need to convert before sending to google
-        description: entities.decode(req.body.plDescription),
+        name: entities.decode(req.body.info.name), //spotify gives us html entities we need to convert before sending to google
+        description: entities.decode(req.body.info.description),
         tracks: req.body.tracks
     };
 
@@ -128,12 +130,12 @@ router.post('/creategpmplaylist', function(req, res) {
             //now we need to insert tracks into the playlist
             //create an array of only the trackIDs
             var trackIDs = [];
+            console.log(gpmPlaylist.tracks);
             for(var i = 0, j = gpmPlaylist.tracks.length; i < j; i++) {
-                if(gpmPlaylist.tracks[i].track.artist !== 'error') { //skip bad matches. TODO: filter this on front end maybe?
-                    trackIDs.push(gpmPlaylist.tracks[i].track.storeId);
+                if(gpmPlaylist.tracks[i].storeId !== 'error') { //skip bad matches. TODO: filter this on front end maybe?
+                    trackIDs.push(gpmPlaylist.tracks[i].storeId);
                 }
             }
-
             gpmAddToPlaylist(trackIDs, plID).then(function(data) {
                 console.log('success adding to pl!', data);
                 var ret = {
@@ -183,6 +185,17 @@ function spConnectToAPI() {
             //console.log('The access token is ' + data.body['access_token']);
             // Save the access token so that it's used in future calls
             spotifyApi.setAccessToken(data.body.access_token);
+
+            //call again when it expires
+            try {
+                clearTimeout(reAuthTimer);
+            }
+            catch(e) {
+                console.err('can\'t cancel timer');
+            }
+
+            reAuthTimer = setTimeout(spConnectToAPI, (data.body.expires_in - 30) * 1000);
+
         },
         function(err) {
             console.log('Something went wrong when retrieving an access token', err.message);

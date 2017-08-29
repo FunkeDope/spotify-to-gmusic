@@ -5,7 +5,7 @@
         <playlist-url></playlist-url>
         
 
-        <md-layout md-row md-gutter>
+        <md-layout md-row>
             <!-- spotify -->
             <!--<spotify-list></spotify-list>-->
             <track-list src="spotify"></track-list>
@@ -62,15 +62,14 @@
                     console.log('comeback: ', vm.gpTracks.tracks);
                     //figure out what had errors
                     for (var i = 0, j = vm.gpTracks.tracks.length; i < j; i++) {
-                        if (!vm.gpTracks.tracks[i]) {
+                        if(!vm.gpTracks.tracks[i]) {
                             vm.gpTracks.errors.push(i);
-                            vm.gpTracks.tracks[i] = {
-                                track: {
-                                    song: 'error',
-                                    artist: 'error',
-                                    album: 'error',
-                                    art: 'error'
-                                }
+                            vm.gpTracks.tracks[i] = {                                
+                                song: 'error',
+                                artist: 'error',
+                                album: 'error',
+                                art: 'error',
+                                storeId: 'error'                          
                             };
                         }
                         else {
@@ -79,6 +78,7 @@
                                 artist: vm.gpTracks.tracks[i].track.artist,
                                 album: vm.gpTracks.tracks[i].track.album,
                                 art: vm.gpTracks.tracks[i].track.albumArtRef[0].url,
+                                storeId: vm.gpTracks.tracks[i].track.storeId //the unique google id. used to actually add to playlist
                             };
                         }
                     }
@@ -94,12 +94,13 @@
             },
             createGPMPlaylist() {
                 let vm = this;
+                
                 var payload = {
-                    tracks: vm.gpTracks.tracks,
-                    plName: vm.spPlaylist.info.name,
-                    plDescription: vm.spPlaylist.info.description || '',
+                    tracks: vm.google.tracks,
+                    info: vm.google.info,
                     user: vm.user
                 };
+                console.log('sending payload:', payload);
 
                 axios.post(config.api.v1 + 'creategpmplaylist', payload).then(function(data) {
                     if (data.status === 200) {
@@ -110,7 +111,7 @@
                         vm.$refs['status'].open();
                     } else {
                         vm.alert = {
-                            title: 'Success!',
+                            title: 'Error!',
                             statusMessage: 'Error! Something went wrong creating the playlist. Try again.'
                         };
                         vm.$refs['status'].open();
@@ -119,7 +120,7 @@
                 }).catch(function(err) {
                     console.error('err creating playlist', err);
                     vm.alert = {
-                        title: 'Success!',
+                        title: 'Error!',
                         statusMessage: 'Error! Something went wrong creating the playlist. Try again.'
                     };
                     vm.$refs['status'].open();
@@ -150,8 +151,5 @@
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-    .container {
-        padding: 0 25px;
-    }
 
 </style>

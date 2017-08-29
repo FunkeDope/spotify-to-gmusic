@@ -34,7 +34,15 @@
                 let vm = this;
                 //reset everything
                 vm.spTracks = [];
-                vm.$root.$data.spotify = {info: {}, tracks:[]};
+                vm.$root.$data.spotify = {
+                    info: {}, 
+                    tracks:[]
+                };
+                vm.$root.$data.google = {
+                    info: {},
+                    tracks: [],
+                    errors: []
+                };
 
                 //console.log('submit: ', vm.spplURL);
                 let payload = {
